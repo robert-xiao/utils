@@ -1,0 +1,67 @@
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+
+@RestController()
+public class LogController {
+
+	private static Logger log = LoggerFactory.getLogger(LogController.class);
+	
+	@GetMapping("/set-level")
+	public String changeLevel(@RequestParam String rootLevel, @RequestParam String singleLevel, @RequestParam String singlePath){
+		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        log.warn("set log rootLevel:{},singleLevel:{},singlePath:{}", rootLevel, singleLevel, singlePath);
+        if (!StringUtils.isEmpty(rootLevel)) {
+            // 设置全局日志级别
+            ch.qos.logback.classic.Logger logger = loggerContext.getLogger("root");
+            logger.setLevel(Level.toLevel(rootLevel));
+        }
+ 
+        if (!StringUtils.isEmpty(singleLevel)) {
+            // 设置某个类日志级别-可以实现定向日志级别调整
+            ch.qos.logback.classic.Logger vLogger = loggerContext.getLogger(singlePath);
+            if (vLogger != null) {
+                vLogger.setLevel(Level.toLevel(singleLevel));
+            }
+        }
+        return "success";
+	}
+	
+	@GetMapping("/get-level")
+	public String getLogLevel(@RequestParam(required=false) String name){
+		Logger logger = log;
+		if(StringUtils.isNotBlank(name)){
+			LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+			logger = loggerContext.getLogger(name);			
+		}
+		else{			
+			name = this.getClass().toString();
+		}
+		
+		String str = null;
+		if(log.isDebugEnabled()){
+			str =  name + "`s log level is debug.";
+			logger.debug(str);			
+		} else if(log.isInfoEnabled()){
+			str =  name + "`s  log level is info.";
+			logger.debug(str);	
+		} else if(log.isWarnEnabled()){
+			str =  name + "`s  log level is warn.";
+			logger.debug(str);	
+		} else if(log.isErrorEnabled()){
+			str =  name + "`s  log level is error.";
+			logger.debug(str);	
+		} else {
+			str = name + "`s  log level is unknown";
+		}
+		return str;
+	}
+}
